@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>InstaReels Tracker</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #fafafa; margin: 0; padding: 20px; color: #262626; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; }
+        .search-box { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        input { padding: 12px; border: 1px solid #dbdbdb; border-radius: 8px; width: 300px; outline: none; transition: 0.2s; }
+        input:focus { border-color: #a8a8a8; }
+        button { padding: 12px 24px; background: #0095f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        button:hover { background: #1877f2; }
+        button:disabled { background: #b2dffc; cursor: not-allowed; }
+        #status-msg { font-weight: 500; color: #0095f6; min-height: 20px; }
+        #reels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
+        .reel-card { background: white; border: 1px solid #dbdbdb; border-radius: 12px; overflow: hidden; transition: transform 0.2s ease-in-out; }
+        .reel-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .thumb-container { position: relative; width: 100%; aspect-ratio: 9/16; background: #000; }
+        .thumb-container img { width: 100%; height: 100%; object-fit: cover; }
+        .stats-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.85)); color: white; padding: 15px; display: flex; gap: 15px; font-weight: bold; font-size: 14px; }
+        .content { padding: 15px; }
+        .status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: #efefef; color: #8e8e8e; float: right; }
+        .caption { font-size: 14px; line-height: 1.5; margin: 10px 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; color: #262626; }
+        .footer-info { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #8e8e8e; margin-top: 15px; border-top: 1px solid #fafafa; pt: 10px; }
+        a { color: #00376b; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🎬 Reels Tracker</h1>
+        <div class="search-box">
+            <input type="text" id="username" placeholder="Usuário (ex: alexfourmisoff)" value="alexfourmisoff">
+            <button id="btn-buscar">Buscar Reels</button>
+        </div>
+        <p id="status-msg"></p>
+    </header>
+
+    <div id="reels-grid"></div>
+</div>
+
+<script>
+    const reelsGrid = document.getElementById('reels-grid');
+    const btnBuscar = document.getElementById('btn-buscar');
+    const statusMsg = document.getElementById('status-msg');
+    
+    // Conecta no WS do backend
+    const socket = new WebSocket('ws://localhost:3001');
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'initial' && data.reels) {
+            data.reels.forEach(reel => renderReel(reel));
+        }
+    };
+
+    function renderReel(reel) {
+        if (!reel.shortcode || document.getElementById(reel.shortcode)) return;
+
+        const card = document.createElement('div');
+        card.id = reel.shortcode;
+        card.className = 'reel-card';
+        card.innerHTML = `
+            <div class="thumb-container">
+                <img src="${reel.thumbnail}" alt="Reel">
+                <div class="stats-overlay">
+                    <span>❤️ ${Number(reel.likes).toLocaleString('pt-BR')}</span>
+                    <span>💬 ${Number(reel.comments).toLocaleString('pt-BR')}</span>
+                </div>
+            </div>
+            <div class="content">
+                <span class="status-badge">${reel.status}</span>
+                <div class="caption">${reel.caption}</div>
+                <div class="footer-info">
+                    <span>${reel.timestamp}</span>
+                    <a href="${reel.url}" target="_blank">Ver no Instagram</a>
+                </div>
+            </div>
+        `;
+        reelsGrid.appendChild(card);
+    }
+
+    btnBuscar.onclick = async () => {
+        const user = document.getElementById('username').value.trim();
+        if (!user) return;
+
+        btnBuscar.disabled = true;
+        reelsGrid.innerHTML = '';
+        statusMsg.innerText = `⏳ Extraindo dados de @${user}...`;
+
+        try {
+            const response = await fetch(`http://localhost:3000/api/reels/${user}`);
+            const result = await response.json();
+
+            if (result.success) {
+                statusMsg.innerText = `✅ Encontrados ${result.count} Reels.`;
+                result.reels.forEach(r => renderReel(r));
+            } else {
+                statusMsg.innerText = `❌ Erro: ${result.error}`;
+            }
+        } catch (err) {
+            statusMsg.innerText = "❌ Servidor Offline.";
+        } finally {
+            btnBuscar.disabled = false;
+        }
+    };
+</script>
+</body>
+</html>
