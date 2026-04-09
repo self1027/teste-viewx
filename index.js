@@ -47,7 +47,10 @@ async function getContext(browser) {
 
 app.get('/api/reels/:username', async (req, res) => {
 	const { username } = req.params;
-	const browser = await chromium.launch({ headless: true });
+	const browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 	const context = await getContext(browser);
 	const page = await context.newPage();
 
