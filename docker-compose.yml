@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  reels-api:
+    build: .
+    container_name: reels-api
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - .env
+
+    shm_size: "1gb"
+
+    restart: unless-stopped
