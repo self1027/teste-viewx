@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 async function getContext(browser) {
 	const context = await browser.newContext({
@@ -202,5 +203,5 @@ app.get('/api/reels/:username', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-	console.log(`API: http://localhost:${PORT}`);
+	console.log(`RODANDO: http://localhost:${PORT}`);
 });
