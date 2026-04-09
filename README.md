@@ -78,6 +78,65 @@ Além disso, o bônus de extração de legenda foi implementado utilizando o end
 
 O super bônus de identificação de cross-post para o Facebook também foi atendido através de uma heurística baseada nos campos retornados pela API, como `fb_play_count`, `fb_like_count`, `fb_comment_count` e `has_shared_to_fb`. A presença desses dados é utilizada para determinar se o conteúdo foi distribuído também no Facebook, sendo consolidada na flag `is_crosspost` dentro da resposta final.
 
+## Como executar o projeto
+
+Para rodar a aplicação localmente, é necessário configurar algumas variáveis de ambiente e utilizar o Docker para garantir compatibilidade com o ambiente de execução do Playwright.
+
+1. Clone o repositório:
+
+```bash
+git clone <repo>
+cd <repo>
+```
+
+2. Crie o arquivo `.env` com base no exemplo:
+
+```bash
+cp .env.example .env
+```
+
+3. Preencha as credenciais do Instagram no `.env`:
+
+```env
+INSTA_SESSIONID=seu_sessionid_aqui
+INSTA_DS_USER_ID=seu_user_id_numérico_aqui
+INSTA_CSRFTOKEN=seu_csrftoken_aqui
+```
+
+> As credenciais são utilizadas para autenticação e liberação completa do conteúdo via sessão.
+
+4. Execute o projeto com Docker:
+
+```bash
+docker compose up --build
+```
+
+5. Acesse a aplicação:
+
+```
+http://localhost:3000
+```
+
+---
+
+## Endpoint principal
+
+```http
+GET /api/reels/:username?target=10
+```
+
+### Parâmetros:
+
+* `username` → usuário do Instagram
+* `target` → quantidade de reels (1 a 50)
+
+
+* O projeto depende de uma sessão autenticada para acesso completo aos dados
+* Sem credenciais válidas, a API pode retornar resultados limitados
+* O uso do Docker é recomendado para evitar problemas com dependências do navegador
+
+---
+
 Teste concluído com ajuda de IA's
 
 Murilo D.
